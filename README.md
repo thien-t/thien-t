@@ -1,7 +1,6 @@
 - 👋 Hi, I’m @thien-t
-- 👀 I’m interested in ...
-- 🌱 I’m currently learning ...
-- You can reach me on
+- 👀 I’m interested in medicine, biotech, and data science
+- You can reach me on...
 
 <!---
 thien-t/thien-t is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
