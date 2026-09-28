@@ -31,10 +31,12 @@ final class Workout {
 
     var allSets: [WorkoutSet] { sortedExercises.flatMap(\.sortedSets) }
     var completedSets: [WorkoutSet] { allSets.filter(\.isCompleted) }
+    var workingSets: [WorkoutSet] { completedSets.filter { !$0.isWarmup } }
+    var hardSetCount: Int { allSets.filter(\.isHardSet).count }
 
     var duration: TimeInterval { (endedAt ?? .now).timeIntervalSince(startedAt) }
-    var totalReps: Int { completedSets.reduce(0) { $0 + $1.reps } }
-    var totalVolume: Double { completedSets.reduce(0) { $0 + Double($1.reps) * $1.weight } }
+    var totalReps: Int { workingSets.reduce(0) { $0 + $1.reps } }
+    var totalVolume: Double { workingSets.reduce(0) { $0 + Double($1.reps) * $1.weight } }
     var totalWorkTime: TimeInterval { completedSets.reduce(0) { $0 + ($1.workSeconds ?? 0) } }
     var totalRestTime: TimeInterval { completedSets.reduce(0) { $0 + ($1.restSeconds ?? 0) } }
 }
@@ -44,15 +46,57 @@ final class WorkoutExercise {
     var name: String
     var order: Int
     var restSeconds: Int
+    var repRangeLow: Int = 8
+    var repRangeHigh: Int = 12
+    var targetRIR: Int = 2
+    var weightIncrement: Double = 2.5
     @Relationship(deleteRule: .cascade, inverse: \WorkoutSet.exercise)
     var sets: [WorkoutSet] = []
     var workout: Workout?
 
-    init(name: String, order: Int, restSeconds: Int) {
+    init(
+        name: String,
+        order: Int,
+        restSeconds: Int,
+        repRangeLow: Int = 8,
+        repRangeHigh: Int = 12,
+        targetRIR: Int = 2,
+        weightIncrement: Double = 2.5
+    ) {
         self.name = name
         self.order = order
         self.restSeconds = restSeconds
+        self.repRangeLow = repRangeLow
+        self.repRangeHigh = repRangeHigh
+        self.targetRIR = targetRIR
+        self.weightIncrement = weightIncrement
     }
+
+    convenience init(name: String, order: Int, defaults: MovementDefaults) {
+        self.init(
+            name: name,
+            order: order,
+            restSeconds: defaults.restSeconds,
+            repRangeLow: defaults.repLow,
+            repRangeHigh: defaults.repHigh,
+            targetRIR: defaults.targetRIR,
+            weightIncrement: defaults.increment
+        )
+    }
+
+    convenience init(from planned: RoutineExercise, order: Int) {
+        self.init(
+            name: planned.name,
+            order: order,
+            restSeconds: planned.restSeconds,
+            repRangeLow: planned.repRangeLow,
+            repRangeHigh: planned.repRangeHigh,
+            targetRIR: planned.targetRIR,
+            weightIncrement: planned.weightIncrement
+        )
+    }
+
+    var repRangeText: String { "\(repRangeLow)–\(repRangeHigh) reps" }
 
     var sortedSets: [WorkoutSet] {
         sets.sorted { $0.order < $1.order }
@@ -65,6 +109,10 @@ final class WorkoutSet {
     var reps: Int
     var weight: Double
     var isCompleted: Bool = false
+    /// Warm-up sets don't count toward volume or progression.
+    var isWarmup: Bool = false
+    /// Reps in reserve: how many more reps you could have done (4 means 4+).
+    var rir: Int? = nil
     var completedAt: Date? = nil
     /// How long the set itself took (from the end of the previous rest to checking it off).
     var workSeconds: Double? = nil

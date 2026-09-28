@@ -11,7 +11,7 @@ struct WorkoutTimerApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [Routine.self, Workout.self])
+        .modelContainer(for: [Routine.self, Workout.self, CustomMovement.self])
     }
 }
 

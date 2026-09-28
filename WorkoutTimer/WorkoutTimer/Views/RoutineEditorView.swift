@@ -5,8 +5,12 @@ struct RoutineEditorView: View {
     @Environment(\.modelContext) private var context
     @Bindable var routine: Routine
     @AppStorage(SettingsKey.weightUnit) private var unit = WeightUnit.kg.rawValue
-    @AppStorage(SettingsKey.defaultRestSeconds) private var defaultRest = 90
+    @Query private var customMovements: [CustomMovement]
     @State private var showingPicker = false
+
+    init(routine: Routine) {
+        _routine = Bindable(routine)
+    }
 
     var body: some View {
         Form {
@@ -40,7 +44,8 @@ struct RoutineEditorView: View {
         .sheet(isPresented: $showingPicker) {
             ExercisePickerView { name in
                 let order = (routine.exercises.map(\.order).max() ?? -1) + 1
-                routine.exercises.append(RoutineExercise(name: name, order: order, restSeconds: defaultRest))
+                let defaults = MuscleResolver(custom: customMovements).defaults(for: name)
+                routine.exercises.append(RoutineExercise(name: name, order: order, defaults: defaults))
             }
         }
     }
@@ -59,9 +64,20 @@ struct RoutineExerciseSection: View {
     var body: some View {
         Section {
             Stepper("Sets: \(exercise.targetSets)", value: $exercise.targetSets, in: 1...20)
-            Stepper("Reps: \(exercise.targetReps)", value: $exercise.targetReps, in: 1...100)
+            Stepper("Rep range low: \(exercise.repRangeLow)", value: $exercise.repRangeLow, in: 1...exercise.repRangeHigh)
+            Stepper("Rep range high: \(exercise.repRangeHigh)", value: $exercise.repRangeHigh, in: exercise.repRangeLow...50)
+            Picker("Target RIR", selection: $exercise.targetRIR) {
+                ForEach(0...4, id: \.self) { value in
+                    Text(value == 0 ? "0 (failure)" : "\(value)").tag(value)
+                }
+            }
+            Picker("Weight jump", selection: $exercise.weightIncrement) {
+                ForEach(WeightIncrement.values(including: exercise.weightIncrement), id: \.self) { value in
+                    Text("+\(Format.weight(value)) \(unit)").tag(value)
+                }
+            }
             HStack {
-                Text("Weight (\(unit))")
+                Text("Starting weight (\(unit))")
                 Spacer()
                 TextField("0", value: $exercise.targetWeight, format: .number.precision(.fractionLength(0...2)))
                     .keyboardType(.decimalPad)
@@ -72,6 +88,16 @@ struct RoutineExerciseSection: View {
             Button("Remove Exercise", role: .destructive, action: onRemove)
         } header: {
             Text(exercise.name)
+        } footer: {
+            Text("Starting weight is only used the first time. After that, weights come from your last session and progress automatically.")
         }
+    }
+}
+
+enum WeightIncrement {
+    static let standard: [Double] = [0.5, 1, 1.25, 2, 2.5, 5, 10]
+
+    static func values(including value: Double) -> [Double] {
+        standard.contains(value) ? standard : (standard + [value]).sorted()
     }
 }

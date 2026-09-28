@@ -12,7 +12,8 @@ struct WorkoutDetailView: View {
             Section("Summary") {
                 LabeledContent("Date", value: workout.startedAt.formatted(date: .abbreviated, time: .shortened))
                 LabeledContent("Duration", value: Format.clock(workout.duration))
-                LabeledContent("Sets", value: "\(workout.completedSets.count)")
+                LabeledContent("Working sets", value: "\(workout.workingSets.count)")
+                LabeledContent("Hard sets (RIR ≤ 3)", value: "\(workout.hardSetCount)")
                 LabeledContent("Reps", value: "\(workout.totalReps)")
                 if workout.totalVolume > 0 {
                     LabeledContent("Volume", value: "\(Format.weight(workout.totalVolume)) \(unit)")
@@ -23,12 +24,19 @@ struct WorkoutDetailView: View {
 
             ForEach(workout.sortedExercises) { exercise in
                 Section(exercise.name) {
-                    ForEach(Array(exercise.sortedSets.enumerated()), id: \.element.id) { index, set in
+                    ForEach(setLabels(exercise), id: \.set.id) { label, set in
                         HStack {
-                            Text("\(index + 1)")
-                                .foregroundStyle(.secondary)
+                            Text(label)
+                                .foregroundStyle(set.isWarmup ? Color.orange : Color.secondary)
                                 .frame(width: 24, alignment: .leading)
-                            Text(Format.setSummary(reps: set.reps, weight: set.weight, unit: unit))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(Format.setSummary(reps: set.reps, weight: set.weight, unit: unit))
+                                if let rir = set.rir, !set.isWarmup {
+                                    Text("RIR \(Format.rir(rir))")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
                                 if let work = set.workSeconds, work >= 1 {
@@ -67,16 +75,29 @@ struct WorkoutDetailView: View {
         }
     }
 
+    /// "W" for warm-ups, 1, 2, 3… for working sets.
+    private func setLabels(_ exercise: WorkoutExercise) -> [(label: String, set: WorkoutSet)] {
+        var working = 0
+        return exercise.sortedSets.map { set -> (label: String, set: WorkoutSet) in
+            if set.isWarmup { return ("W", set) }
+            working += 1
+            return ("\(working)", set)
+        }
+    }
+
     private func saveAsRoutine() {
         let routine = Routine(name: workout.name)
         context.insert(routine)
         for (index, exercise) in workout.sortedExercises.enumerated() {
-            let sets = exercise.sortedSets
+            let sets = exercise.sortedSets.filter { !$0.isWarmup }
             routine.exercises.append(RoutineExercise(
                 name: exercise.name,
                 order: index,
                 targetSets: max(1, sets.count),
-                targetReps: sets.last?.reps ?? 10,
+                repRangeLow: exercise.repRangeLow,
+                repRangeHigh: exercise.repRangeHigh,
+                targetRIR: exercise.targetRIR,
+                weightIncrement: exercise.weightIncrement,
                 targetWeight: sets.map(\.weight).max() ?? 0,
                 restSeconds: exercise.restSeconds
             ))

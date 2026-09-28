@@ -30,7 +30,13 @@ final class RoutineExercise {
     var name: String
     var order: Int
     var targetSets: Int
-    var targetReps: Int
+    var repRangeLow: Int = 8
+    var repRangeHigh: Int = 12
+    /// Reps in reserve to aim for on working sets (0 = failure).
+    var targetRIR: Int = 2
+    /// How much to add once you hit the top of the rep range on every set.
+    var weightIncrement: Double = 2.5
+    /// Starting weight, used the first time you do the movement.
     var targetWeight: Double
     var restSeconds: Int
     var routine: Routine?
@@ -39,15 +45,33 @@ final class RoutineExercise {
         name: String,
         order: Int,
         targetSets: Int = 3,
-        targetReps: Int = 10,
+        repRangeLow: Int = 8,
+        repRangeHigh: Int = 12,
+        targetRIR: Int = 2,
+        weightIncrement: Double = 2.5,
         targetWeight: Double = 0,
-        restSeconds: Int = 90
+        restSeconds: Int = 120
     ) {
         self.name = name
         self.order = order
         self.targetSets = targetSets
-        self.targetReps = targetReps
+        self.repRangeLow = repRangeLow
+        self.repRangeHigh = repRangeHigh
+        self.targetRIR = targetRIR
+        self.weightIncrement = weightIncrement
         self.targetWeight = targetWeight
         self.restSeconds = restSeconds
+    }
+
+    convenience init(name: String, order: Int, defaults: MovementDefaults) {
+        self.init(
+            name: name,
+            order: order,
+            repRangeLow: defaults.repLow,
+            repRangeHigh: defaults.repHigh,
+            targetRIR: defaults.targetRIR,
+            weightIncrement: defaults.increment,
+            restSeconds: defaults.restSeconds
+        )
     }
 }

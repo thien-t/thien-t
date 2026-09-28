@@ -61,7 +61,8 @@ extension Workout {
         set.completedAt = now
         set.workSeconds = max(0, now.timeIntervalSince(start))
 
-        let rest = set.exercise?.restSeconds ?? 0
+        let planned = set.exercise?.restSeconds ?? 0
+        let rest = set.isWarmup ? min(planned, 60) : planned
         if rest > 0 {
             let end = now.addingTimeInterval(TimeInterval(rest))
             restStartedAt = now

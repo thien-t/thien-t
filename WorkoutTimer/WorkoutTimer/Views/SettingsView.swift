@@ -3,7 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(SettingsKey.weightUnit) private var unit = WeightUnit.kg.rawValue
-    @AppStorage(SettingsKey.defaultRestSeconds) private var defaultRest = 90
+    @AppStorage(SettingsKey.defaultRestSeconds) private var defaultRest = 120
     @AppStorage(SettingsKey.keepScreenAwake) private var keepScreenAwake = true
 
     var body: some View {
@@ -23,7 +23,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Timer")
                 } footer: {
-                    Text("Default rest is used for exercises you add. Each exercise's rest can be changed from its menu during a workout.")
+                    Text("Built-in movements get hypertrophy rest defaults (about 2½ min for compounds, 90 s for isolation). Default rest applies to other movements. You can change any exercise's rest from its ⋯ menu during a workout.")
                 }
 
                 Section {

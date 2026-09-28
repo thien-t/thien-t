@@ -8,6 +8,8 @@ struct ContentView: View {
                 .tabItem { Label("Workout", systemImage: "stopwatch") }
             RoutinesView()
                 .tabItem { Label("Routines", systemImage: "list.bullet.clipboard") }
+            VolumeView()
+                .tabItem { Label("Volume", systemImage: "chart.bar.fill") }
             HistoryView()
                 .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
         }
@@ -32,5 +34,5 @@ struct WorkoutTab: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Routine.self, Workout.self], inMemory: true)
+        .modelContainer(for: [Routine.self, Workout.self, CustomMovement.self], inMemory: true)
 }

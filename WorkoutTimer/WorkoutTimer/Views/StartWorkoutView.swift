@@ -4,6 +4,8 @@ import SwiftData
 struct StartWorkoutView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Routine.createdAt) private var routines: [Routine]
+    @Query(filter: #Predicate<Workout> { $0.endedAt != nil }, sort: \Workout.startedAt, order: .reverse)
+    private var finishedWorkouts: [Workout]
     @State private var showingSettings = false
 
     var body: some View {
@@ -21,9 +23,14 @@ struct StartWorkoutView: View {
 
             Section("Start from a Routine") {
                 if routines.isEmpty {
-                    Text("Plan movements, sets, reps, weights and rest times in the Routines tab, then start them here.")
+                    Text("Plan movements, rep ranges, effort and rest times in the Routines tab, then start them here.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
+                    Button {
+                        PPLTemplate.install(into: context)
+                    } label: {
+                        Label("Add Push / Pull / Legs Routines", systemImage: "square.stack.3d.up.fill")
+                    }
                 }
                 ForEach(routines) { routine in
                     Button {
@@ -66,12 +73,15 @@ struct StartWorkoutView: View {
     private func start(from routine: Routine) {
         let workout = Workout(name: routine.name)
         context.insert(workout)
+        let history = PerformanceHistory(workouts: finishedWorkouts)
         for (index, planned) in routine.sortedExercises.enumerated() {
-            let exercise = WorkoutExercise(name: planned.name, order: index, restSeconds: planned.restSeconds)
+            let exercise = WorkoutExercise(from: planned, order: index)
             workout.exercises.append(exercise)
-            for number in 0..<max(1, planned.targetSets) {
-                exercise.sets.append(WorkoutSet(order: number, reps: planned.targetReps, weight: planned.targetWeight))
-            }
+            exercise.fillSets(
+                count: planned.targetSets,
+                last: history.last(planned.name),
+                fallbackWeight: planned.targetWeight
+            )
         }
         RestNotifier.requestAuthorization()
     }

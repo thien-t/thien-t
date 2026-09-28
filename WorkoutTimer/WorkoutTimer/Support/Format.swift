@@ -34,6 +34,21 @@ enum Format {
         return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 
+    static func sets(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(0...1)))
+    }
+
+    static func rir(_ value: Int) -> String {
+        value >= 4 ? "4+" : "\(value)"
+    }
+
+    /// Compact "60 × 10 @2" used in the PREVIOUS column.
+    static func previous(_ set: WorkoutSet) -> String {
+        var text = set.weight > 0 ? "\(Format.weight(set.weight)) × \(set.reps)" : "\(set.reps) reps"
+        if let value = set.rir { text += " @\(Format.rir(value))" }
+        return text
+    }
+
     /// "10 × 60 kg", or "10 reps" for bodyweight movements.
     static func setSummary(reps: Int, weight: Double, unit: String) -> String {
         weight > 0 ? "\(reps) × \(Format.weight(weight)) \(unit)" : "\(reps) reps"
@@ -46,22 +61,6 @@ enum RestOptions {
     static func values(including value: Int) -> [Int] {
         standard.contains(value) ? standard : (standard + [value]).sorted()
     }
-}
-
-enum Movement {
-    static let common = [
-        "Bench Press", "Incline Bench Press", "Dumbbell Bench Press", "Incline Dumbbell Press",
-        "Chest Fly", "Push-Up", "Dip",
-        "Squat", "Front Squat", "Goblet Squat", "Leg Press", "Lunge", "Bulgarian Split Squat",
-        "Leg Extension", "Leg Curl", "Calf Raise", "Hip Thrust",
-        "Deadlift", "Romanian Deadlift", "Sumo Deadlift", "Good Morning",
-        "Overhead Press", "Dumbbell Shoulder Press", "Lateral Raise", "Rear Delt Fly", "Face Pull",
-        "Pull-Up", "Chin-Up", "Lat Pulldown", "Barbell Row", "Dumbbell Row", "Seated Cable Row",
-        "Shrug", "Bicep Curl", "Hammer Curl", "Preacher Curl",
-        "Tricep Pushdown", "Skull Crusher", "Overhead Tricep Extension",
-        "Plank", "Hanging Leg Raise", "Cable Crunch", "Russian Twist",
-        "Kettlebell Swing", "Clean", "Snatch", "Thruster", "Burpee", "Box Jump",
-    ]
 }
 
 func dismissKeyboard() {

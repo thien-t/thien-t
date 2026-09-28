@@ -28,8 +28,9 @@ struct RoutinesView: View {
                     } description: {
                         Text("Plan a workout with movements, sets, reps, weights and rest times.")
                     } actions: {
-                        Button("Create Routine", action: addRoutine)
+                        Button("Add Push / Pull / Legs") { PPLTemplate.install(into: context) }
                             .buttonStyle(.borderedProminent)
+                        Button("Create Empty Routine", action: addRoutine)
                     }
                 }
             }
@@ -39,10 +40,19 @@ struct RoutinesView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: addRoutine) {
+                    Menu {
+                        Button(action: addRoutine) {
+                            Label("New Routine", systemImage: "plus")
+                        }
+                        Button {
+                            PPLTemplate.install(into: context)
+                        } label: {
+                            Label("Add Push / Pull / Legs", systemImage: "square.stack.3d.up.fill")
+                        }
+                    } label: {
                         Image(systemName: "plus")
                     }
-                    .accessibilityLabel("New Routine")
+                    .accessibilityLabel("Add Routine")
                 }
             }
         }

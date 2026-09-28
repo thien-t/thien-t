@@ -20,7 +20,7 @@ struct HistoryView: View {
                         HStack {
                             StatView(value: "\(thisWeek.count)", label: "Workouts")
                             StatView(value: Format.clock(thisWeek.reduce(0) { $0 + $1.duration }), label: "Time")
-                            StatView(value: "\(thisWeek.reduce(0) { $0 + $1.completedSets.count })", label: "Sets")
+                            StatView(value: "\(thisWeek.reduce(0) { $0 + $1.hardSetCount })", label: "Hard sets")
                         }
                     }
                 }
@@ -77,7 +77,7 @@ struct WorkoutRow: View {
                 .foregroundStyle(.secondary)
             HStack(spacing: 14) {
                 Label(Format.clock(workout.duration), systemImage: "timer")
-                Label("\(workout.completedSets.count) sets", systemImage: "square.stack.3d.up")
+                Label("\(workout.hardSetCount) hard sets", systemImage: "square.stack.3d.up")
                 if workout.totalVolume > 0 {
                     Label("\(Format.weight(workout.totalVolume)) \(unit)", systemImage: "scalemass")
                 }
